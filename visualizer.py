@@ -1,11 +1,25 @@
 """
 Curses-based terminal ASCII renderer for A-Maze-ing.
 
-Renders the maze using block characters. Each maze cell is drawn as a
-3x3 block of characters in the terminal. Walls are drawn as solid blocks,
-corridors as spaces.
+Terminal characters are roughly twice as tall as they are wide (~2:1 ratio),
+so a naive 1×1 interior per cell makes vertical corridors look narrower than
+horizontal ones.
 
-Controls displayed in a menu below the maze:
+Fix: use a non-square cell layout where each cell interior is 2 chars wide
+and 1 char tall. The full character grid is then (3W+1) cols × (2H+1) rows:
+
+  col bands:  [wall=1][interior=2][wall=1][interior=2]...  → 3W+1 total cols
+  row bands:  [wall=1][interior=1][wall=1][interior=1]...  → 2H+1 total rows
+
+Column index mapping:
+  col % 3 == 0            → vertical wall column
+  col % 3 == 1 or 2       → cell interior or h-wall fill
+
+Cell (cx, cy) occupies:
+  terminal cols  cx*3+1  and  cx*3+2   (2 chars wide)
+  terminal row   cy*2+1               (1 char tall)
+
+Controls:
   1 - Re-generate a new maze
   2 - Show/Hide shortest path
   3 - Rotate wall colour
@@ -15,18 +29,17 @@ Controls displayed in a menu below the maze:
 from __future__ import annotations
 
 import curses
-import sys
 from typing import Callable
 
 from mazegen_src.mazegen import MazeGenerator, NORTH, EAST, SOUTH, WEST
 
-# Wall colour palette (curses colour pairs)
 COLOUR_WALL = 1
 COLOUR_PATH = 2
 COLOUR_ENTRY = 3
 COLOUR_EXIT = 4
 COLOUR_42 = 5
 COLOUR_MENU = 6
+COLOUR_OPEN = 7
 
 WALL_COLORS = [
     curses.COLOR_WHITE,
@@ -38,24 +51,26 @@ WALL_COLORS = [
 ]
 
 WALL_CHAR = '█'
-OPEN_CHAR = ' '
+PATH_CHAR = '█'
 
 
 def _init_colors() -> None:
     """Initialize curses colour pairs."""
     curses.start_color()
     curses.use_default_colors()
-    curses.init_pair(COLOUR_WALL, curses.COLOR_WHITE, -1)
-    curses.init_pair(COLOUR_PATH, curses.COLOR_CYAN, -1)
-    curses.init_pair(COLOUR_ENTRY, curses.COLOR_MAGENTA, -1)
-    curses.init_pair(COLOUR_EXIT, curses.COLOR_RED, -1)
-    curses.init_pair(COLOUR_42, curses.COLOR_WHITE, curses.COLOR_WHITE)
+    curses.init_pair(COLOUR_OPEN, curses.COLOR_BLACK, curses.COLOR_BLACK)
+    curses.init_pair(COLOUR_WALL, curses.COLOR_WHITE, curses.COLOR_WHITE)
+    curses.init_pair(COLOUR_PATH, curses.COLOR_CYAN, curses.COLOR_CYAN)
+    curses.init_pair(COLOUR_ENTRY, curses.COLOR_MAGENTA, curses.COLOR_MAGENTA)
+    curses.init_pair(COLOUR_EXIT, curses.COLOR_RED, curses.COLOR_RED)
+    curses.init_pair(COLOUR_42, curses.COLOR_BLUE, curses.COLOR_BLUE)
     curses.init_pair(COLOUR_MENU, curses.COLOR_YELLOW, -1)
 
 
 def _set_wall_color(color_idx: int) -> None:
     """Change the wall colour to the given palette index."""
-    curses.init_pair(COLOUR_WALL, WALL_COLORS[color_idx % len(WALL_COLORS)], -1)
+    c = WALL_COLORS[color_idx % len(WALL_COLORS)]
+    curses.init_pair(COLOUR_WALL, c, c)
 
 
 def _draw_maze(
@@ -65,137 +80,157 @@ def _draw_maze(
     wall_color_idx: int,
 ) -> None:
     """
-    Draw the entire maze to the curses window.
+    Draw the maze with aspect-ratio-corrected cell layout.
 
-    Each maze cell occupies a 3x3 block of terminal characters:
-      - Top row:    NW-corner, N-wall, NE-corner
-      - Middle row: W-wall,   cell,   E-wall
-      - Bottom row: SW-corner, S-wall, SE-corner
+    Each maze cell interior is 2 terminal chars wide and 1 char tall,
+    compensating for the ~2:1 terminal character aspect ratio so that
+    horizontal and vertical corridors appear the same visual width.
+
+    Grid structure (W cells wide, H cells tall):
+      Total terminal cols: 3*W + 1
+      Total terminal rows: 2*H + 1
+
+    For a given terminal (row, col):
+      row % 2 == 0             → horizontal wall/border row
+      row % 2 == 1             → cell interior row
+      col % 3 == 0             → vertical wall/border column
+      col % 3 == 1 or 2        → cell interior or h-wall columns
+
+    Cell (cx, cy) maps to:
+      terminal row:  cy*2 + 1
+      terminal cols: cx*3 + 1  and  cx*3 + 2
 
     Args:
         stdscr: The curses window.
-        gen: MazeGenerator instance with generated maze.
+        gen: Fully generated MazeGenerator instance.
         show_path: Whether to overlay the solution path.
-        wall_color_idx: Index into WALL_COLORS for wall colour.
+        wall_color_idx: Current wall colour index (colour already applied).
     """
     stdscr.clear()
     max_y, max_x = stdscr.getmaxyx()
 
-    path_set = set(gen.solution) if show_path else set()
-    forty_two_set = set(gen.forty_two_cells)
-
-    # Cell size in terminal chars
-    cell_w = 3
-    cell_h = 2  # We use a 2-row approach: top wall + cell body
+    path_set: set[tuple[int, int]] = set(gen.solution) if show_path else set()
+    forty_two_set: set[tuple[int, int]] = set(gen.forty_two_cells)
 
     wall_attr = curses.color_pair(COLOUR_WALL)
     path_attr = curses.color_pair(COLOUR_PATH)
     entry_attr = curses.color_pair(COLOUR_ENTRY)
     exit_attr = curses.color_pair(COLOUR_EXIT)
     ft_attr = curses.color_pair(COLOUR_42)
+    open_attr = curses.color_pair(COLOUR_OPEN)
 
     W = gen.width
     H = gen.height
 
-    # Each cell = 2 rows tall (top wall row + body row)
-    # Plus one final bottom wall row
-    # Each cell = 2 cols wide (left wall col + body col)
-    # Plus one final right wall col
+    total_cols = 3 * W + 1
+    total_rows = 2 * H + 1
 
-    def safe_addstr(y: int, x: int, s: str, attr: int = 0) -> None:
-        """Add string safely, ignoring out-of-bounds errors."""
+    def safe_add(row: int, col: int, ch: str, attr: int = 0) -> None:
+        """Write one character safely, ignoring out-of-bounds."""
         try:
-            if 0 <= y < max_y and 0 <= x < max_x:
-                # Truncate if needed
-                avail = max_x - x
-                if avail > 0:
-                    stdscr.addstr(y, x, s[:avail], attr)
+            if 0 <= row < max_y and 0 <= col < max_x - 1:
+                stdscr.addstr(row, col, ch, attr)
         except curses.error:
             pass
 
-    for cy in range(H):
-        for cx in range(W):
-            cell = gen.grid[cy][cx]
-            # Terminal position of top-left corner of this cell block
-            ty = cy * 2
-            tx = cx * 2
+    def cell_of_col(col: int) -> int:
+        """Return the maze cell x-index for a given terminal column."""
+        return col // 3
 
-            is_42 = (cx, cy) in forty_two_set
-            is_entry = (cx, cy) == gen.entry
-            is_exit = (cx, cy) == gen.exit_
-            is_path = (cx, cy) in path_set
+    def is_vcol_border(col: int) -> bool:
+        """True if this terminal column is a vertical wall column."""
+        return col % 3 == 0
 
-            # Determine cell body attribute
-            if is_42:
-                body_attr = ft_attr
-                body_char = ' '
-            elif is_entry:
-                body_attr = entry_attr
-                body_char = 'S'
-            elif is_exit:
-                body_attr = exit_attr
-                body_char = 'E'
-            elif is_path:
-                body_attr = path_attr
-                body_char = '·'
+    def is_hrow_border(row: int) -> bool:
+        """True if this terminal row is a horizontal wall row."""
+        return row % 2 == 0
+
+    for row in range(total_rows):
+        for col in range(total_cols):
+            cx = cell_of_col(col)
+            cy = row // 2
+            hborder = is_hrow_border(row)
+            vborder = is_vcol_border(col)
+
+            # ── Corner: vertical-wall col + horizontal-wall row ──────────
+            if hborder and vborder:
+                safe_add(row, col, WALL_CHAR, wall_attr)
+
+            # ── Horizontal wall/gap: h-border row, interior col ──────────
+            # Outer border rows are always solid wall (entry/exit open only
+            # in the data, not visually — the box stays closed like the PDF).
+            elif hborder and not vborder:
+                above = cy - 1
+                is_outer = (row == 0 or row == 2 * H)
+                wall_closed = is_outer
+                if not is_outer:
+                    if 0 <= above < H and (gen.grid[above][cx] & SOUTH):
+                        wall_closed = True
+                    elif 0 <= cy < H and (gen.grid[cy][cx] & NORTH):
+                        wall_closed = True
+
+                if wall_closed:
+                    safe_add(row, col, WALL_CHAR, wall_attr)
+                elif (show_path
+                        and 0 <= above < H and (cx, above) in path_set
+                        and 0 <= cy < H and (cx, cy) in path_set):
+                    safe_add(row, col, PATH_CHAR, path_attr)
+                else:
+                    safe_add(row, col, ' ', open_attr)
+
+            # ── Vertical wall/gap: interior row, v-border col ────────────
+            # Outer border cols are always solid wall for the same reason.
+            elif not hborder and vborder:
+                left = cx - 1
+                is_outer = (col == 0 or col == 3 * W)
+                wall_closed = is_outer
+                if not is_outer:
+                    if 0 <= left < W and (gen.grid[cy][left] & EAST):
+                        wall_closed = True
+                    elif 0 <= cx < W and (gen.grid[cy][cx] & WEST):
+                        wall_closed = True
+
+                if wall_closed:
+                    safe_add(row, col, WALL_CHAR, wall_attr)
+                elif (show_path
+                        and 0 <= left < W and (left, cy) in path_set
+                        and 0 <= cx < W and (cx, cy) in path_set):
+                    safe_add(row, col, PATH_CHAR, path_attr)
+                else:
+                    safe_add(row, col, ' ', open_attr)
+
+            # ── Cell interior: interior row, interior col ─────────────────
             else:
-                body_attr = 0
-                body_char = ' '
+                if cy >= H or cx >= W:
+                    continue
 
-            # Top-left corner (always wall)
-            safe_addstr(ty, tx, WALL_CHAR, wall_attr)
+                is_42 = (cx, cy) in forty_two_set
+                is_entry = (cx, cy) == gen.entry
+                is_exit = (cx, cy) == gen.exit_
+                is_path = (cx, cy) in path_set
 
-            # Top wall (N wall of cell)
-            if cell & NORTH:
-                safe_addstr(ty, tx + 1, WALL_CHAR, wall_attr)
-            else:
-                safe_addstr(ty, tx + 1, ' ', 0)
+                # First interior col of cell → may show label char
+                col_in_cell = col % 3  # 1 or 2
 
-            # Body row
-            # Left wall (W wall)
-            if cell & WEST:
-                safe_addstr(ty + 1, tx, WALL_CHAR, wall_attr)
-            else:
-                safe_addstr(ty + 1, tx, ' ', 0)
+                if is_42:
+                    safe_add(row, col, WALL_CHAR, ft_attr)
+                elif is_entry:
+                    safe_add(row, col, WALL_CHAR, entry_attr)
+                elif is_exit:
+                    safe_add(row, col, WALL_CHAR, exit_attr)
+                elif is_path:
+                    safe_add(row, col, PATH_CHAR, path_attr)
+                else:
+                    safe_add(row, col, ' ', open_attr)
 
-            # Cell interior
-            safe_addstr(ty + 1, tx + 1, body_char, body_attr)
-
-        # After all columns in this row, draw the right border
-        cx = W - 1
-        ty = cy * 2
-        cell = gen.grid[cy][cx]
-        # Top-right corner
-        safe_addstr(ty, W * 2, WALL_CHAR, wall_attr)
-        # Right wall body
-        if cell & EAST:
-            safe_addstr(ty + 1, W * 2, WALL_CHAR, wall_attr)
-        else:
-            safe_addstr(ty + 1, W * 2, ' ', 0)
-
-    # Draw final bottom border row
-    ty = H * 2
-    for cx in range(W):
-        cell = gen.grid[H - 1][cx]
-        tx = cx * 2
-        safe_addstr(ty, tx, WALL_CHAR, wall_attr)
-        if cell & SOUTH:
-            safe_addstr(ty, tx + 1, WALL_CHAR, wall_attr)
-        else:
-            safe_addstr(ty, tx + 1, ' ', 0)
-    safe_addstr(ty, W * 2, WALL_CHAR, wall_attr)
-
-    # Draw menu below maze
-    menu_y = ty + 2
-    menu_line = (
-        "==== A-Maze-ing ===="
-    )
-    safe_addstr(menu_y, 0, menu_line, curses.color_pair(COLOUR_MENU))
-    safe_addstr(menu_y + 1, 0, "1. Re-generate a new maze", 0)
-    safe_addstr(menu_y + 2, 0, "2. Show/Hide path from entry to exit", 0)
-    safe_addstr(menu_y + 3, 0, "3. Rotate maze colors", 0)
-    safe_addstr(menu_y + 4, 0, "4. Quit", 0)
-    safe_addstr(menu_y + 5, 0, "Choice (1-4): ", curses.color_pair(COLOUR_MENU))
+    # ── Menu ─────────────────────────────────────────────────────────────
+    menu_y = total_rows + 1
+    safe_add(menu_y,     0, "==== A-Maze-ing ====", curses.color_pair(COLOUR_MENU))
+    safe_add(menu_y + 1, 0, "1. Re-generate a new maze")
+    safe_add(menu_y + 2, 0, "2. Show/Hide path from entry to exit")
+    safe_add(menu_y + 3, 0, "3. Rotate maze colors")
+    safe_add(menu_y + 4, 0, "4. Quit")
+    safe_add(menu_y + 5, 0, "Choice (1-4): ", curses.color_pair(COLOUR_MENU))
 
     stdscr.refresh()
 
@@ -209,8 +244,7 @@ def run_visualizer(
 
     Args:
         gen: Initial MazeGenerator with generated maze.
-        regenerate_cb: Callable that returns a new MazeGenerator
-                       (regenerates maze with new random seed).
+        regenerate_cb: Callable returning a freshly generated MazeGenerator.
     """
     def _main(stdscr: curses.window) -> None:
         _init_colors()
