@@ -174,6 +174,35 @@ class MazeGenerator:
         """Check if a cell is part of the '42' pattern."""
         return (x, y) in self.forty_two_cells
 
+    @staticmethod
+    def compute_42_cells(width: int, height: int) -> list[tuple[int, int]]:
+        """
+        Compute which cells the '42' pattern occupies for a given maze size.
+
+        Returns an empty list if the maze is too small to fit the pattern.
+        Call this before generation to validate entry/exit positions.
+
+        Args:
+            width: Maze width in cells.
+            height: Maze height in cells.
+
+        Returns:
+            List of (x, y) cell coordinates occupied by the '42' pattern.
+        """
+        min_w, min_h = 10, 7
+        if width < min_w or height < min_h:
+            return []
+        pattern_w = 7
+        pattern_h = 5
+        start_col = (width - pattern_w) // 2
+        start_row = (height - pattern_h) // 2
+        cells: list[tuple[int, int]] = []
+        for (dc, dr) in DIGIT_4:
+            cells.append((start_col + dc, start_row + dr))
+        for (dc, dr) in DIGIT_2:
+            cells.append((start_col + 4 + dc, start_row + dr))
+        return cells
+
     def _dfs_generate(self, perfect: bool) -> None:
         """Run DFS to carve passages through the maze."""
         visited = [[False] * self.width for _ in range(self.height)]

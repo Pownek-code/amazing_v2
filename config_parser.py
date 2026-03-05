@@ -5,6 +5,8 @@ from __future__ import annotations
 import os
 from typing import Any
 
+from mazegen_src.mazegen import MazeGenerator
+
 
 REQUIRED_KEYS = {"WIDTH", "HEIGHT", "ENTRY", "EXIT", "OUTPUT_FILE", "PERFECT"}
 
@@ -90,6 +92,21 @@ def parse_config(filepath: str) -> dict[str, Any]:
         )
     if config['ENTRY'] == config['EXIT']:
         raise ConfigError("ENTRY and EXIT must be different cells.")
+
+    # Validate that entry/exit don't overlap the '42' pattern
+    forty_two = MazeGenerator.compute_42_cells(config['WIDTH'], config['HEIGHT'])
+    if forty_two:
+        forty_two_set = set(forty_two)
+        if config['ENTRY'] in forty_two_set:
+            raise ConfigError(
+                f"ENTRY {config['ENTRY']} overlaps the '42' pattern. "
+                f"Choose a different entry cell."
+            )
+        if config['EXIT'] in forty_two_set:
+            raise ConfigError(
+                f"EXIT {config['EXIT']} overlaps the '42' pattern. "
+                f"Choose a different exit cell."
+            )
 
     perfect_str = raw['PERFECT'].strip().lower()
     if perfect_str in ('true', '1', 'yes'):
