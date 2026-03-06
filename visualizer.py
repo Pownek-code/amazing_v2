@@ -106,8 +106,15 @@ def _draw_maze(
         show_path: Whether to overlay the solution path.
         wall_color_idx: Current wall colour index (colour already applied).
     """
-    stdscr.clear()
     max_y, max_x = stdscr.getmaxyx()
+    # Clear only the maze area rows, not the menu below
+    maze_rows = 2 * gen.height + 1
+    blank_line = ' ' * (max_x - 1)
+    for r in range(maze_rows):
+        try:
+            stdscr.addstr(r, 0, blank_line)
+        except curses.error:
+            pass
 
     path_set: set[tuple[int, int]] = set(gen.solution) if show_path else set()
     forty_two_set: set[tuple[int, int]] = set(gen.forty_two_cells)
@@ -264,6 +271,19 @@ def run_visualizer(
                 continue
 
             if key == '1':
+                # Wipe only the maze rows so the menu stays visible,
+                # then redraw — user sees a clear wipe+redraw even with
+                # a fixed seed producing the same maze.
+                max_y2, max_x2 = stdscr.getmaxyx()
+                blank = ' ' * (max_x2 - 1)
+                maze_rows2 = 2 * current_gen.height + 1
+                for r in range(maze_rows2):
+                    try:
+                        stdscr.addstr(r, 0, blank)
+                    except curses.error:
+                        pass
+                stdscr.refresh()
+                curses.napms(120)
                 current_gen = regenerate_cb()
                 show_path = False
                 _draw_maze(stdscr, current_gen, show_path, wall_color_idx)
