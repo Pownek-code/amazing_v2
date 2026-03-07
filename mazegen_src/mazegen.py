@@ -139,7 +139,7 @@ class MazeGenerator:
         self._enforce_borders()
 
         # Open entry and exit on the border
-        self._open_entry_exit()
+        # self._open_entry_exit()
 
         # Solve the maze (BFS shortest path)
         self._solve()
@@ -276,30 +276,30 @@ class MazeGenerator:
             self.grid[y][0] |= WEST
             self.grid[y][self.width - 1] |= EAST
 
-    def _open_entry_exit(self) -> None:
-        """Open the outer wall at entry and exit cells."""
-        ex, ey = self.entry
-        xx, xy = self.exit_
+    # def _open_entry_exit(self) -> None:
+    #     """Open the outer wall at entry and exit cells."""
+    #     ex, ey = self.entry
+    #     xx, xy = self.exit_
 
-        # Entry: open the wall facing outside (border side)
-        if ey == 0:
-            self.grid[ey][ex] &= ~NORTH
-        elif ey == self.height - 1:
-            self.grid[ey][ex] &= ~SOUTH
-        elif ex == 0:
-            self.grid[ey][ex] &= ~WEST
-        else:
-            self.grid[ey][ex] &= ~EAST
+    #     # Entry: open the wall facing outside (border side)
+    #     if ey == 0:
+    #         self.grid[ey][ex] &= ~NORTH
+    #     elif ey == self.height - 1:
+    #         self.grid[ey][ex] &= ~SOUTH
+    #     elif ex == 0:
+    #         self.grid[ey][ex] &= ~WEST
+    #     else:
+    #         self.grid[ey][ex] &= ~EAST
 
-        # Exit: same logic
-        if xy == 0:
-            self.grid[xy][xx] &= ~NORTH
-        elif xy == self.height - 1:
-            self.grid[xy][xx] &= ~SOUTH
-        elif xx == 0:
-            self.grid[xy][xx] &= ~WEST
-        else:
-            self.grid[xy][xx] &= ~EAST
+    #     # Exit: same logic
+    #     if xy == 0:
+    #         self.grid[xy][xx] &= ~NORTH
+    #     elif xy == self.height - 1:
+    #         self.grid[xy][xx] &= ~SOUTH
+    #     elif xx == 0:
+    #         self.grid[xy][xx] &= ~WEST
+    #     else:
+    #         self.grid[xy][xx] &= ~EAST
 
     def _solve(self) -> None:
         """Find the shortest path from entry to exit using BFS."""
