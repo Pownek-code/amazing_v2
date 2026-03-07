@@ -219,7 +219,7 @@ class MazeGenerator:
         while stack:
             x, y = stack[-1]
             neighbors = []
-            for (letter, dx, dy, wall_here, wall_there) in DIRECTIONS:
+            for (_, dx, dy, wall_here, wall_there) in DIRECTIONS:
                 nx, ny = x + dx, y + dy
                 if (0 <= nx < self.width and 0 <= ny < self.height
                         and not visited[ny][nx]
