@@ -1,10 +1,5 @@
-"""Configuration file parser for A-Maze-ing."""
-
-from __future__ import annotations
-
 import os
 from typing import Any
-
 from mazegen_src.mazegen import MazeGenerator
 
 
@@ -17,19 +12,19 @@ class ConfigError(Exception):
 
 
 def parse_config(filepath: str) -> dict[str, Any]:
-    """
-    Parse a KEY=VALUE configuration file.
+    # """
+    # Parse a KEY=VALUE configuration file.
 
-    Args:
-        filepath: Path to the config file.
+    # Args:
+    #     filepath: Path to the config file.
 
-    Returns:
-        Dictionary with parsed and validated configuration values.
+    # Returns:
+    #     Dictionary with parsed and validated configuration values.
 
-    Raises:
-        ConfigError: On any validation or parsing error.
-        FileNotFoundError: If the file does not exist.
-    """
+    # Raises:
+    #     ConfigError: On any validation or parsing error.
+    #     FileNotFoundError: If the file does not exist.
+    # """
     if not os.path.isfile(filepath):
         raise FileNotFoundError(f"Config file not found: {filepath}")
 
@@ -92,8 +87,6 @@ def parse_config(filepath: str) -> dict[str, Any]:
         )
     if config['ENTRY'] == config['EXIT']:
         raise ConfigError("ENTRY and EXIT must be different cells.")
-
-    # Validate that entry/exit don't overlap the '42' pattern
     forty_two = MazeGenerator.compute_42_cells(config['WIDTH'], config['HEIGHT'])
     if forty_two:
         forty_two_set = set(forty_two)
@@ -117,8 +110,6 @@ def parse_config(filepath: str) -> dict[str, Any]:
         raise ConfigError(f"PERFECT must be True or False (got {raw['PERFECT']!r})")
 
     config['OUTPUT_FILE'] = raw['OUTPUT_FILE']
-
-    # Optional keys
     config['SEED'] = None
     if 'SEED' in raw:
         try:

@@ -1,28 +1,23 @@
-"""Output file writer for A-Maze-ing maze format."""
-
-from __future__ import annotations
-
 from mazegen_src.mazegen import MazeGenerator
 
-
 def write_output(gen: MazeGenerator, filepath: str) -> None:
-    """
-    Write the maze to a file in the required hex format.
+    # """
+    # Write the maze to a file in the required hex format.
 
-    Format:
-        - One hex digit per cell, one row per line.
-        - Empty line.
-        - Entry coordinates: x,y
-        - Exit coordinates: x,y
-        - Shortest path as direction string (N/E/S/W)
+    # Format:
+    #     - One hex digit per cell, one row per line.
+    #     - Empty line.
+    #     - Entry coordinates: x,y
+    #     - Exit coordinates: x,y
+    #     - Shortest path as direction string (N/E/S/W)
 
-    Args:
-        gen: A MazeGenerator instance after generate() has been called.
-        filepath: Output file path.
+    # Args:
+    #     gen: A MazeGenerator instance after generate() has been called.
+    #     filepath: Output file path.
 
-    Raises:
-        OSError: If the file cannot be written.
-    """
+    # Raises:
+    #     OSError: If the file cannot be written.
+    # """
     ex, ey = gen.entry
     xx, xy = gen.exit_
 
