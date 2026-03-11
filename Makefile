@@ -5,7 +5,8 @@ CONFIG = config.txt
 .PHONY: install run debug lint lint-strict clean
 
 install:
-	pip install flake8 mypy --break-system-packages
+	$(PYTHON) -m pip install flake8 mypy --break-system-packages
+	$(PYTHON) -m pip install mazegen-1.0.0-py3-none-any.whl --break-system-packages
 
 run:
 	$(PYTHON) $(MAIN) $(CONFIG)
