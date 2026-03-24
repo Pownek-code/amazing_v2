@@ -66,7 +66,7 @@ class MazeGenerator:
         self.seed = seed
         self.grid: list[list[int]] = []
         self.entry: tuple[int, int] = (0, 0)
-        self.exit_: tuple[int, int] = (width - 1, height - 1)
+        self.exit: tuple[int, int] = (width - 1, height - 1)
         self.solution: list[tuple[int, int]] = []
         self.solution_str: str = ""
         self.forty_two_cells: list[tuple[int, int]] = []
@@ -170,7 +170,7 @@ class MazeGenerator:
                         and not self._is_42_cell(nx, ny)):
                     neighbors.append((nx, ny, wall_here, wall_there))
             if neighbors:
-                nx, ny, wh, wt = self._rng.choice(neighbors)
+                nx, ny, wh, wt = self.rng.choice(neighbors)
                 self.grid[y][x] &= ~wh
                 self.grid[ny][nx] &= ~wt
                 visited[ny][nx] = True
@@ -180,8 +180,8 @@ class MazeGenerator:
         if not perfect:
             extra = (self.width * self.height) // 8
             for _ in range(extra):
-                x = self._rng.randint(0, self.width - 2)
-                y = self._rng.randint(0, self.height - 2)
+                x = self.rng.randint(0, self.width - 2)
+                y = self.rng.randint(0, self.height - 2)
                 if not self._is_42_cell(x, y) and not self._is_42_cell(x + 1, y):
                     self.grid[y][x] &= ~EAST
                     self.grid[y][x + 1] &= ~WEST
@@ -216,7 +216,7 @@ class MazeGenerator:
     def solve(self) -> None:
         """Find the shortest path from entry to exit using BFS."""
         ex, ey = self.entry
-        xx, xy = self.exit_
+        xx, xy = self.exit
         from_cell: dict[tuple[int, int], tuple[int, int] | None] = {
             (ex, ey): None
         }

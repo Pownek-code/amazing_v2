@@ -19,7 +19,7 @@ def write_output(gen: MazeGenerator, filepath: str) -> None:
     #     OSError: If the file cannot be written.
     # """
     ex, ey = gen.entry
-    xx, xy = gen.exit_
+    xx, xy = gen.exit
 
     with open(filepath, 'w') as f:
         for row in gen.to_hex_grid():

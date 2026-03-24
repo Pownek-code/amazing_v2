@@ -24,7 +24,7 @@ def build_generator(config: dict) -> MazeGenerator:  # type: ignore[type-arg]
     gen.generate(
         perfect=config['PERFECT'],
         entry=config['ENTRY'],
-        exit_=config['EXIT'],
+        exit=config['EXIT'],
     )
 
     if gen.forty_two_omitted:

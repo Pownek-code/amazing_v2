@@ -211,7 +211,7 @@ def _draw_maze(
 
                 is_42 = (cx, cy) in forty_two_set
                 is_entry = (cx, cy) == gen.entry
-                is_exit = (cx, cy) == gen.exit_
+                is_exit = (cx, cy) == gen.exit
                 is_path = (cx, cy) in path_set
 
                 col_in_cell = col % 3
