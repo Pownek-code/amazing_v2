@@ -71,13 +71,13 @@ class MazeGenerator:
         self.solution_str: str = ""
         self.forty_two_cells: list[tuple[int, int]] = []
         self.forty_two_omitted: bool = False
-        self._rng = random.Random(seed)
+        self.rng = random.Random(seed)
 
     def generate(
         self,
         perfect: bool = True,
         entry: tuple[int, int] = (0, 0),
-        exit_: tuple[int, int] | None = None
+        exit: tuple[int, int] | None = None
     ) -> None:
         # """
         # Generate the maze.
@@ -87,19 +87,19 @@ class MazeGenerator:
         #     entry: Entry cell coordinates (x, y).
         #     exit_: Exit cell coordinates (x, y). Defaults to bottom-right.
         # """
-        if exit_ is None:
-            exit_ = (self.width - 1, self.height - 1)
+        if exit is None:
+            exit = (self.width - 1, self.height - 1)
 
         self.entry = entry
-        self.exit_ = exit_
-        self._rng = random.Random(self.seed)
+        self.exit = exit
+        self.rng = random.Random(self.seed)
         self.grid = [[ALL_WALLS] * self.width for _ in range(self.height)]
-        self._place_42_pattern()
-        self._dfs_generate(perfect)
-        self._enforce_borders()
-        self._solve()
+        self.place_42_pattern()
+        self.dfs_generate(perfect)
+        self.enforce_borders()
+        self.solve()
 
-    def _place_42_pattern(self) -> None:
+    def place_42_pattern(self) -> None:
         """Place the '42' pattern as a reserved set of fully walled cells."""
         min_w = 10
         min_h = 7
@@ -152,7 +152,7 @@ class MazeGenerator:
             cells.append((start_col + 4 + dc, start_row + dr))
         return cells
 
-    def _dfs_generate(self, perfect: bool) -> None:
+    def dfs_generate(self, perfect: bool) -> None:
         """Run DFS to carve passages through the maze."""
         visited = [[False] * self.width for _ in range(self.height)]
         for (cx, cy) in self.forty_two_cells:
@@ -204,7 +204,7 @@ class MazeGenerator:
                             visited[y][x] = True
                             break
 
-    def _enforce_borders(self) -> None:
+    def enforce_borders(self) -> None:
         """Ensure all border cells have their outer walls closed."""
         for x in range(self.width):
             self.grid[0][x] |= NORTH
@@ -213,7 +213,7 @@ class MazeGenerator:
             self.grid[y][0] |= WEST
             self.grid[y][self.width - 1] |= EAST
 
-    def _solve(self) -> None:
+    def solve(self) -> None:
         """Find the shortest path from entry to exit using BFS."""
         ex, ey = self.entry
         xx, xy = self.exit_

@@ -7,27 +7,18 @@ REQUIRED_KEYS = {"WIDTH", "HEIGHT", "ENTRY", "EXIT", "OUTPUT_FILE", "PERFECT"}
 
 
 class ConfigError(Exception):
-    """Raised when configuration is invalid."""
+    """Raises a configuration is invalid."""
     pass
 
 
 def parse_config(filepath: str) -> dict[str, Any]:
-    # """
-    # Parse a KEY=VALUE configuration file.
-
-    # Args:
-    #     filepath: Path to the config file.
-
-    # Returns:
-    #     Dictionary with parsed and validated configuration values.
-
-    # Raises:
-    #     ConfigError: On any validation or parsing error.
-    #     FileNotFoundError: If the file does not exist.
-    # """
+    """
+        This function takes a path to the config file as an argument.
+        parses its elements into a Key Value and returns a dict.
+        raises an error either in validation/parsing, or file not existing.
+    """
     if not os.path.isfile(filepath):
         raise FileNotFoundError(f"Config file not found: {filepath}")
-
     raw: dict[str, str] = {}
     try:
         with open(filepath, 'r') as f:
@@ -60,7 +51,9 @@ def parse_config(filepath: str) -> dict[str, Any]:
         raise ConfigError("WIDTH and HEIGHT must be at least 3.")
 
     def parse_coord(val: str, key: str) -> tuple[int, int]:
-        """Parse 'x,y' coordinate string."""
+        """
+            this function parses an (x, y) coordinate string.
+        """
         parts = val.split(',')
         if len(parts) != 2:
             raise ConfigError(f"{key} must be in format x,y (got {val!r})")

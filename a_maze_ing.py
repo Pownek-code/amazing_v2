@@ -37,12 +37,10 @@ def build_generator(config: dict) -> MazeGenerator:  # type: ignore[type-arg]
 
 
 def main() -> int:
-    # """
-    # Main entry point.
-
-    # Returns:
-    #     Exit code (0 = success, 1 = error).
-    # """
+    """
+        Entry point for my program.
+        returns status 0 if it was a success or 1 if any error occured.
+    """
     if len(sys.argv) != 2:
         print(f"Usage: python3 {sys.argv[0]} config.txt", file=sys.stderr)
         return 1
