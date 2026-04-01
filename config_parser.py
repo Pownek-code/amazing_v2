@@ -31,7 +31,14 @@ def parse_config(filepath: str) -> dict[str, Any]:
                         f"Line {lineno}: invalid format (expected KEY=VALUE): {line!r}" # noqa
                     )
                 key, _, value = line.partition("=")
-                raw[key.strip().upper()] = value.strip()
+                parsed_key = key.strip().upper()
+                if parsed_key in raw:
+                    raise ConfigError(
+                        f"Line {lineno}: Duplicate key detected for {parsed_key!r}. "
+                        "Configuration files must not contain overlapping states."
+                    )
+                    
+                raw[parsed_key] = value.strip()
     except OSError as e:
         raise ConfigError(f"Cannot read config file: {e}") from e
 
@@ -51,6 +58,14 @@ def parse_config(filepath: str) -> dict[str, Any]:
 
     if config["WIDTH"] < 3 or config["HEIGHT"] < 3:
         raise ConfigError("WIDTH and HEIGHT must be at least 3.")
+    
+    MAX_WIDTH: int = 70
+    MAX_HEIGHT: int = 50
+    if config["WIDTH"] > MAX_WIDTH or config["HEIGHT"] > MAX_HEIGHT:
+        raise ConfigError(
+            f"Grid dimensions ({config['WIDTH']}x{config['HEIGHT']}) exceed "
+            f"the maximum safety limits of {MAX_WIDTH}x{MAX_HEIGHT}."
+        )
 
     def parse_coord(val: str, key: str) -> tuple[int, int]:
         """
@@ -107,9 +122,11 @@ def parse_config(filepath: str) -> dict[str, Any]:
     config["OUTPUT_FILE"] = raw["OUTPUT_FILE"]
     config["SEED"] = None
     if "SEED" in raw:
-        try:
-            config["SEED"] = int(raw["SEED"])
-        except ValueError as e:
-            raise ConfigError(f"SEED must be an integer: {e}") from e
-
+        if raw["SEED"].strip().upper() == "NONE":
+            pass
+        else:
+            try:
+                config["SEED"] = int(raw["SEED"])
+            except ValueError as e:
+                raise ConfigError(f"SEED must be an integer or None: {e}") from e
     return config
