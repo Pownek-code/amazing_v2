@@ -4,7 +4,6 @@ from config_parser import ConfigError, parse_config
 from mazegen_src.mazegen import MazeGenerator
 from output_writer import write_output
 from visualizer import run_visualizer
-#from mazegen import MazeGenerator # noqa
 
 
 def build_generator(config: dict) -> MazeGenerator:  # type: ignore[type-arg]
@@ -30,7 +29,8 @@ def build_generator(config: dict) -> MazeGenerator:  # type: ignore[type-arg]
 
     if gen.forty_two_omitted:
         print(
-            "Warning: maze is too small to include the '42' pattern.", file=sys.stderr # noqa
+            "Warning: maze is too small to include the '42' pattern.",
+            file=sys.stderr,
         )
 
     return gen

@@ -28,7 +28,7 @@ def parse_config(filepath: str) -> dict[str, Any]:
                     continue
                 if "=" not in line:
                     raise ConfigError(
-                        f"Line {lineno}: invalid format (expected KEY=VALUE): {line!r}" # noqa
+                        f"Line {lineno}: invalid format (expected KEY=VALUE): {line!r}"
                     )
                 key, _, value = line.partition("=")
                 parsed_key = key.strip().upper()
@@ -37,19 +37,20 @@ def parse_config(filepath: str) -> dict[str, Any]:
                         f"Line {lineno}: Duplicate key detected for {parsed_key!r}. "
                         "Configuration files must not contain overlapping states."
                     )
-                    
+
                 raw[parsed_key] = value.strip()
     except OSError as e:
         raise ConfigError(f"Cannot read config file: {e}") from e
 
     missing = REQUIRED_KEYS - raw.keys()
     if missing:
-        raise ConfigError(f"Missing required keys: {', '.join(sorted(missing))}") # noqa
+        raise ConfigError(
+            f"Missing required keys: {', '.join(sorted(missing))}"
+        )
 
     config: dict[str, Any] = {}
-    # WARNING: add limits for window size HEIGHT and WIDTH
-    ## Warn: add seed NONE
-    # Warning: i should handle duplicate in config parser.
+    # add a line for ommited 42
+    # name file config a_maze_ing.py fix
     try:
         config["WIDTH"] = int(raw["WIDTH"])
         config["HEIGHT"] = int(raw["HEIGHT"])
@@ -58,9 +59,9 @@ def parse_config(filepath: str) -> dict[str, Any]:
 
     if config["WIDTH"] < 3 or config["HEIGHT"] < 3:
         raise ConfigError("WIDTH and HEIGHT must be at least 3.")
-    
-    MAX_WIDTH: int = 70
-    MAX_HEIGHT: int = 50
+
+    MAX_WIDTH: int = 77
+    MAX_HEIGHT: int = 25
     if config["WIDTH"] > MAX_WIDTH or config["HEIGHT"] > MAX_HEIGHT:
         raise ConfigError(
             f"Grid dimensions ({config['WIDTH']}x{config['HEIGHT']}) exceed "
@@ -97,7 +98,9 @@ def parse_config(filepath: str) -> dict[str, Any]:
         )
     if config["ENTRY"] == config["EXIT"]:
         raise ConfigError("ENTRY and EXIT must be different cells.")
-    forty_two = MazeGenerator.compute_42_cells(config["WIDTH"], config["HEIGHT"]) # noqa
+    forty_two = MazeGenerator.compute_42_cells(
+        config["WIDTH"], config["HEIGHT"]
+    )
     if forty_two:
         forty_two_set = set(forty_two)
         if config["ENTRY"] in forty_two_set:
@@ -117,7 +120,9 @@ def parse_config(filepath: str) -> dict[str, Any]:
     elif perfect_str in ("false", "0", "no"):
         config["PERFECT"] = False
     else:
-        raise ConfigError(f"PERFECT must be True or False (got {raw['PERFECT']!r})") # noqa
+        raise ConfigError(
+            f"PERFECT must be True or False (got {raw['PERFECT']!r})"
+        )
 
     config["OUTPUT_FILE"] = raw["OUTPUT_FILE"]
     config["SEED"] = None

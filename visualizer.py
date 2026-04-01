@@ -14,9 +14,6 @@ WALL_COLORS = [
     curses.COLOR_WHITE,
     curses.COLOR_YELLOW,
     curses.COLOR_GREEN,
-    curses.COLOR_CYAN,
-    curses.COLOR_MAGENTA,
-    curses.COLOR_RED,
 ]
 
 BLOCK = "█"
