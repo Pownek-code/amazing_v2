@@ -1,10 +1,9 @@
 # A-Maze-ing default configuration
 # Lines starting with # are comments
 
-WIDTH=12
-HEIGHT=12
-ENTRY=0,0
-EXIT=7, 8
-OUTPUT_FILE=maze.txt
-PERFECT=True
-#SEED=42
+EXIT = 1 , 9
+ENTRY = 5,4
+width = 20
+OUTPUT_FILE = a_maze_ing.py
+PERFECT = true
+HEIGHT = 10

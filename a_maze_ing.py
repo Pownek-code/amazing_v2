@@ -4,6 +4,7 @@ from config_parser import ConfigError, parse_config
 from mazegen_src.mazegen import MazeGenerator
 from output_writer import write_output
 from visualizer import run_visualizer
+#from mazegen import MazeGenerator # noqa
 
 
 def build_generator(config: dict) -> MazeGenerator:  # type: ignore[type-arg]
@@ -17,20 +18,19 @@ def build_generator(config: dict) -> MazeGenerator:  # type: ignore[type-arg]
     #     A fully generated MazeGenerator instance.
     # """
     gen = MazeGenerator(
-        width=config['WIDTH'],
-        height=config['HEIGHT'],
-        seed=config['SEED'],
+        width=config["WIDTH"],
+        height=config["HEIGHT"],
+        seed=config["SEED"],
     )
     gen.generate(
-        perfect=config['PERFECT'],
-        entry=config['ENTRY'],
-        exit=config['EXIT'],
+        perfect=config["PERFECT"],
+        entry=config["ENTRY"],
+        exit=config["EXIT"],
     )
 
     if gen.forty_two_omitted:
         print(
-            "Warning: maze is too small to include the '42' pattern.",
-            file=sys.stderr
+            "Warning: maze is too small to include the '42' pattern.", file=sys.stderr # noqa
         )
 
     return gen
@@ -38,8 +38,8 @@ def build_generator(config: dict) -> MazeGenerator:  # type: ignore[type-arg]
 
 def main() -> int:
     """
-        Entry point for my program.
-        returns status 0 if it was a success or 1 if any error occured.
+    Entry point for my program.
+    returns status 0 if it was a success or 1 if any error occured.
     """
     if len(sys.argv) != 2:
         print(f"Usage: python3 {sys.argv[0]} config.txt", file=sys.stderr)
@@ -61,14 +61,16 @@ def main() -> int:
         return 1
 
     try:
-        write_output(gen, config['OUTPUT_FILE'])
+        write_output(gen, config["OUTPUT_FILE"])
         print(f"Maze written to {config['OUTPUT_FILE']}")
     except OSError as e:
         print(f"Error writing output file: {e}", file=sys.stderr)
         return 1
-    fixed_seed: int | None = config['SEED']
-    startup_seed: int = fixed_seed if fixed_seed is not None         else random.randint(0, 2**31)
-    config['SEED'] = startup_seed
+    fixed_seed: int | None = config["SEED"]
+    startup_seed: int = (
+        fixed_seed if fixed_seed is not None else random.randint(0, 2**31)
+    )
+    config["SEED"] = startup_seed
 
     def regenerate() -> MazeGenerator:
         # """Generate a new maze.
@@ -78,10 +80,10 @@ def main() -> int:
         # """
         new_config = dict(config)
         if fixed_seed is None:
-            new_config['SEED'] = random.randint(0, 2**31)
+            new_config["SEED"] = random.randint(0, 2**31)
         new_gen = build_generator(new_config)
         try:
-            write_output(new_gen, config['OUTPUT_FILE'])
+            write_output(new_gen, config["OUTPUT_FILE"])
         except OSError:
             pass
         return new_gen
@@ -90,5 +92,5 @@ def main() -> int:
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

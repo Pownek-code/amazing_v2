@@ -6,7 +6,7 @@ CONFIG = config.txt
 
 install:
 	$(PYTHON) -m pip install flake8 mypy --break-system-packages
-	$(PYTHON) -m pip install mazegen-1.0.0-py3-none-any.whl --break-system-packages
+	$(PYTHON) -m pip install build
 
 run:
 	$(PYTHON) $(MAIN) $(CONFIG)

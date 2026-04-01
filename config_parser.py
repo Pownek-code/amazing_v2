@@ -2,59 +2,61 @@ import os
 from typing import Any
 from mazegen_src.mazegen import MazeGenerator
 
-
 REQUIRED_KEYS = {"WIDTH", "HEIGHT", "ENTRY", "EXIT", "OUTPUT_FILE", "PERFECT"}
 
 
 class ConfigError(Exception):
     """Raises a configuration is invalid."""
+
     pass
 
 
 def parse_config(filepath: str) -> dict[str, Any]:
     """
-        This function takes a path to the config file as an argument.
-        parses its elements into a Key Value and returns a dict.
-        raises an error either in validation/parsing, or file not existing.
+    This function takes a path to the config file as an argument.
+    parses its elements into a Key Value and returns a dict.
+    raises an error either in validation/parsing, or file not existing.
     """
     if not os.path.isfile(filepath):
         raise FileNotFoundError(f"Config file not found: {filepath}")
     raw: dict[str, str] = {}
     try:
-        with open(filepath, 'r') as f:
+        with open(filepath, "r") as f:
             for lineno, line in enumerate(f, 1):
                 line = line.strip()
-                if not line or line.startswith('#'):
+                if not line or line.startswith("#"):
                     continue
-                if '=' not in line:
+                if "=" not in line:
                     raise ConfigError(
-                        f"Line {lineno}: invalid format (expected KEY=VALUE): {line!r}"
+                        f"Line {lineno}: invalid format (expected KEY=VALUE): {line!r}" # noqa
                     )
-                key, _, value = line.partition('=')
+                key, _, value = line.partition("=")
                 raw[key.strip().upper()] = value.strip()
     except OSError as e:
         raise ConfigError(f"Cannot read config file: {e}") from e
 
     missing = REQUIRED_KEYS - raw.keys()
     if missing:
-        raise ConfigError(f"Missing required keys: {', '.join(sorted(missing))}")
+        raise ConfigError(f"Missing required keys: {', '.join(sorted(missing))}") # noqa
 
     config: dict[str, Any] = {}
-
+    # WARNING: add limits for window size HEIGHT and WIDTH
+    ## Warn: add seed NONE
+    # Warning: i should handle duplicate in config parser.
     try:
-        config['WIDTH'] = int(raw['WIDTH'])
-        config['HEIGHT'] = int(raw['HEIGHT'])
+        config["WIDTH"] = int(raw["WIDTH"])
+        config["HEIGHT"] = int(raw["HEIGHT"])
     except ValueError as e:
         raise ConfigError(f"WIDTH and HEIGHT must be integers: {e}") from e
 
-    if config['WIDTH'] < 3 or config['HEIGHT'] < 3:
+    if config["WIDTH"] < 3 or config["HEIGHT"] < 3:
         raise ConfigError("WIDTH and HEIGHT must be at least 3.")
 
     def parse_coord(val: str, key: str) -> tuple[int, int]:
         """
-            this function parses an (x, y) coordinate string.
+        this function parses an (x, y) coordinate string.
         """
-        parts = val.split(',')
+        parts = val.split(",")
         if len(parts) != 2:
             raise ConfigError(f"{key} must be in format x,y (got {val!r})")
         try:
@@ -62,51 +64,51 @@ def parse_config(filepath: str) -> dict[str, Any]:
         except ValueError as exc:
             raise ConfigError(f"{key} coordinates must be integers") from exc
 
-    config['ENTRY'] = parse_coord(raw['ENTRY'], 'ENTRY')
-    config['EXIT'] = parse_coord(raw['EXIT'], 'EXIT')
+    config["ENTRY"] = parse_coord(raw["ENTRY"], "ENTRY")
+    config["EXIT"] = parse_coord(raw["EXIT"], "EXIT")
 
-    ex, ey = config['ENTRY']
-    xx, xy = config['EXIT']
+    ex, ey = config["ENTRY"]
+    xx, xy = config["EXIT"]
 
-    if not (0 <= ex < config['WIDTH'] and 0 <= ey < config['HEIGHT']):
+    if not (0 <= ex < config["WIDTH"] and 0 <= ey < config["HEIGHT"]):
         raise ConfigError(
             f"ENTRY {config['ENTRY']} is outside maze bounds "
             f"({config['WIDTH']}x{config['HEIGHT']})"
         )
-    if not (0 <= xx < config['WIDTH'] and 0 <= xy < config['HEIGHT']):
+    if not (0 <= xx < config["WIDTH"] and 0 <= xy < config["HEIGHT"]):
         raise ConfigError(
             f"EXIT {config['EXIT']} is outside maze bounds "
             f"({config['WIDTH']}x{config['HEIGHT']})"
         )
-    if config['ENTRY'] == config['EXIT']:
+    if config["ENTRY"] == config["EXIT"]:
         raise ConfigError("ENTRY and EXIT must be different cells.")
-    forty_two = MazeGenerator.compute_42_cells(config['WIDTH'], config['HEIGHT'])
+    forty_two = MazeGenerator.compute_42_cells(config["WIDTH"], config["HEIGHT"]) # noqa
     if forty_two:
         forty_two_set = set(forty_two)
-        if config['ENTRY'] in forty_two_set:
+        if config["ENTRY"] in forty_two_set:
             raise ConfigError(
                 f"ENTRY {config['ENTRY']} overlaps the '42' pattern. "
                 f"Choose a different entry cell."
             )
-        if config['EXIT'] in forty_two_set:
+        if config["EXIT"] in forty_two_set:
             raise ConfigError(
                 f"EXIT {config['EXIT']} overlaps the '42' pattern. "
                 f"Choose a different exit cell."
             )
 
-    perfect_str = raw['PERFECT'].strip().lower()
-    if perfect_str in ('true', '1', 'yes'):
-        config['PERFECT'] = True
-    elif perfect_str in ('false', '0', 'no'):
-        config['PERFECT'] = False
+    perfect_str = raw["PERFECT"].strip().lower()
+    if perfect_str in ("true", "1", "yes"):
+        config["PERFECT"] = True
+    elif perfect_str in ("false", "0", "no"):
+        config["PERFECT"] = False
     else:
-        raise ConfigError(f"PERFECT must be True or False (got {raw['PERFECT']!r})")
+        raise ConfigError(f"PERFECT must be True or False (got {raw['PERFECT']!r})") # noqa
 
-    config['OUTPUT_FILE'] = raw['OUTPUT_FILE']
-    config['SEED'] = None
-    if 'SEED' in raw:
+    config["OUTPUT_FILE"] = raw["OUTPUT_FILE"]
+    config["SEED"] = None
+    if "SEED" in raw:
         try:
-            config['SEED'] = int(raw['SEED'])
+            config["SEED"] = int(raw["SEED"])
         except ValueError as e:
             raise ConfigError(f"SEED must be an integer: {e}") from e
 
