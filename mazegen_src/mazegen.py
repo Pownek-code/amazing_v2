@@ -119,7 +119,7 @@ class MazeGenerator:
             cells.append((start_col + 4 + dc, start_row + dr))
         self.forty_two_cells = cells
 
-    def _is_42_cell(self, x: int, y: int) -> bool:
+    def is_42_cell(self, x: int, y: int) -> bool:
         """Check if a cell is part of the '42' pattern."""
         return (x, y) in self.forty_two_cells
 
@@ -167,7 +167,7 @@ class MazeGenerator:
                 nx, ny = x + dx, y + dy
                 if (0 <= nx < self.width and 0 <= ny < self.height
                         and not visited[ny][nx]
-                        and not self._is_42_cell(nx, ny)):
+                        and not self.is_42_cell(nx, ny)):
                     neighbors.append((nx, ny, wall_here, wall_there))
             if neighbors:
                 nx, ny, wh, wt = self.rng.choice(neighbors)
@@ -182,23 +182,23 @@ class MazeGenerator:
             for _ in range(extra):
                 x = self.rng.randint(0, self.width - 2)
                 y = self.rng.randint(0, self.height - 2)
-                if not self._is_42_cell(x, y) and not self._is_42_cell(x + 1, y):
+                if not self.is_42_cell(x, y) and not self.is_42_cell(x + 1, y):
                     self.grid[y][x] &= ~EAST
                     self.grid[y][x + 1] &= ~WEST
-        self._connect_isolated(visited)
+        self.connect_isolated(visited)
 
-    def _connect_isolated(
+    def connect_isolated(
         self, visited: list[list[bool]]
     ) -> None:
         """Connect any unvisited (isolated) cells to the main maze."""
         for y in range(self.height):
             for x in range(self.width):
-                if not visited[y][x] and not self._is_42_cell(x, y):
+                if not visited[y][x] and not self.is_42_cell(x, y):
                     for (_, dx, dy, wh, wt) in DIRECTIONS:
                         nx, ny = x + dx, y + dy
                         if (0 <= nx < self.width and 0 <= ny < self.height
                                 and visited[ny][nx]
-                                and not self._is_42_cell(nx, ny)):
+                                and not self.is_42_cell(nx, ny)):
                             self.grid[y][x] &= ~wh
                             self.grid[ny][nx] &= ~wt
                             visited[y][x] = True
@@ -212,14 +212,17 @@ class MazeGenerator:
         for y in range(self.height):
             self.grid[y][0] |= WEST
             self.grid[y][self.width - 1] |= EAST
-
+    
     def solve(self) -> None:
-        """Find the shortest path from entry to exit using BFS."""
+        """Coordinate the shortest path resolution and string generation."""
+        self.solution = self.build_shortest_path()
+        self.solution_str = self.convert_path_to_directions(self.solution)
+
+    def build_shortest_path(self) -> list[tuple[int, int]]:
+        """Execute BFS to map the graph, then reconstruct the coordinate sequence."""
         ex, ey = self.entry
         xx, xy = self.exit
-        from_cell: dict[tuple[int, int], tuple[int, int] | None] = {
-            (ex, ey): None
-        }
+        from_cell: dict[tuple[int, int], tuple[int, int] | None] = {(ex, ey): None}
         queue: deque[tuple[int, int]] = deque([(ex, ey)])
         while queue:
             x, y = queue.popleft()
@@ -238,13 +241,15 @@ class MazeGenerator:
             path.append(cur)
             cur = from_cell.get(cur)
         path.reverse()
-        self.solution = path
+        return path
+
+    def convert_path_to_directions(self, path: list[tuple[int, int]]) -> str:
+        """Translate a sequential list of coordinates into cardinal directions."""
         dirs = []
         for i in range(len(path) - 1):
             cx, cy = path[i]
             nx2, ny2 = path[i + 1]
-            dx = nx2 - cx
-            dy = ny2 - cy
+            dx, dy = nx2 - cx, ny2 - cy
             if dy == -1:
                 dirs.append('N')
             elif dx == 1:
@@ -253,7 +258,49 @@ class MazeGenerator:
                 dirs.append('S')
             else:
                 dirs.append('W')
-        self.solution_str = ''.join(dirs)
+        return ''.join(dirs)
+
+    # def solve(self) -> None:
+    #     """Find the shortest path from entry to exit using BFS."""
+    #     ex, ey = self.entry
+    #     xx, xy = self.exit
+    #     from_cell: dict[tuple[int, int], tuple[int, int] | None] = {
+    #         (ex, ey): None
+    #     }
+    #     queue: deque[tuple[int, int]] = deque([(ex, ey)])
+    #     while queue:
+    #         x, y = queue.popleft()
+    #         if (x, y) == (xx, xy):
+    #             break
+    #         for (_, dx, dy, wall_here, _) in DIRECTIONS:
+    #             nx, ny = x + dx, y + dy
+    #             if (0 <= nx < self.width and 0 <= ny < self.height
+    #                     and (nx, ny) not in from_cell
+    #                     and not (self.grid[y][x] & wall_here)):
+    #                 from_cell[(nx, ny)] = (x, y)
+    #                 queue.append((nx, ny))
+    #     path: list[tuple[int, int]] = []
+    #     cur: tuple[int, int] | None = (xx, xy)
+    #     while cur is not None:
+    #         path.append(cur)
+    #         cur = from_cell.get(cur)
+    #     path.reverse()
+    #     self.solution = path
+    #     dirs = []
+    #     for i in range(len(path) - 1):
+    #         cx, cy = path[i]
+    #         nx2, ny2 = path[i + 1]
+    #         dx = nx2 - cx
+    #         dy = ny2 - cy
+    #         if dy == -1:
+    #             dirs.append('N')
+    #         elif dx == 1:
+    #             dirs.append('E')
+    #         elif dy == 1:
+    #             dirs.append('S')
+    #         else:
+    #             dirs.append('W')
+    #     self.solution_str = ''.join(dirs)
 
     def to_hex_grid(self) -> list[str]:
         # """
