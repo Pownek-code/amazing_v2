@@ -50,7 +50,6 @@ def parse_config(filepath: str) -> dict[str, Any]:
 
     config: dict[str, Any] = {}
     # add a line for ommited 42
-    # name file config a_maze_ing.py fix
     try:
         config["WIDTH"] = int(raw["WIDTH"])
         config["HEIGHT"] = int(raw["HEIGHT"])

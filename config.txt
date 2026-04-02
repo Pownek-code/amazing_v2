@@ -1,12 +1,12 @@
 # A-Maze-ing default configuration
 # Lines starting with # are comments
 
-EXIT = 1, 4
-ENTRY = 1, 5
+EXIT = 2, 2
+ENTRY = 1, 1
 
 
-width =    10
+width = 3 
 
 output_FILE = maze.txt
 PERFECT= no
-HEIGHT = 7
+HEIGHT = 3
