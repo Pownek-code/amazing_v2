@@ -77,8 +77,8 @@ def parse_config(filepath: str) -> dict[str, Any]:
             raise ConfigError(f"{key} must be in format x,y (got {val!r})")
         try:
             return int(parts[0].strip()), int(parts[1].strip())
-        except ValueError as exc:
-            raise ConfigError(f"{key} coordinates must be integers") from exc
+        except ValueError:
+            raise ConfigError(f"{key} coordinates must be integers")
 
     config["ENTRY"] = parse_coord(raw["ENTRY"], "ENTRY")
     config["EXIT"] = parse_coord(raw["EXIT"], "EXIT")

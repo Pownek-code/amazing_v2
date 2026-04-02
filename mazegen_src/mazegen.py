@@ -273,47 +273,6 @@ class MazeGenerator:
                 dirs.append("W")
         return "".join(dirs)
 
-    # def solve(self) -> None:
-    #     """Find the shortest path from entry to exit using BFS."""
-    #     ex, ey = self.entry
-    #     xx, xy = self.exit
-    #     from_cell: dict[tuple[int, int], tuple[int, int] | None] = {
-    #         (ex, ey): None
-    #     }
-    #     queue: deque[tuple[int, int]] = deque([(ex, ey)])
-    #     while queue:
-    #         x, y = queue.popleft()
-    #         if (x, y) == (xx, xy):
-    #             break
-    #         for (_, dx, dy, wall_here, _) in DIRECTIONS:
-    #             nx, ny = x + dx, y + dy
-    #             if (0 <= nx < self.width and 0 <= ny < self.height
-    #                     and (nx, ny) not in from_cell
-    #                     and not (self.grid[y][x] & wall_here)):
-    #                 from_cell[(nx, ny)] = (x, y)
-    #                 queue.append((nx, ny))
-    #     path: list[tuple[int, int]] = []
-    #     cur: tuple[int, int] | None = (xx, xy)
-    #     while cur is not None:
-    #         path.append(cur)
-    #         cur = from_cell.get(cur)
-    #     path.reverse()
-    #     self.solution = path
-    #     dirs = []
-    #     for i in range(len(path) - 1):
-    #         cx, cy = path[i]
-    #         nx2, ny2 = path[i + 1]
-    #         dx = nx2 - cx
-    #         dy = ny2 - cy
-    #         if dy == -1:
-    #             dirs.append('N')
-    #         elif dx == 1:
-    #             dirs.append('E')
-    #         elif dy == 1:
-    #             dirs.append('S')
-    #         else:
-    #             dirs.append('W')
-    #     self.solution_str = ''.join(dirs)
 
     def to_hex_grid(self) -> list[str]:
         # """
