@@ -58,7 +58,8 @@ class MazeGenerator:
     #     forty_two_cells (list[tuple[int, int]]): Cells forming "42" pattern.
     #     forty_two_omitted (bool): True if "42" pattern could not be placed.
     # """
-    def __init__(self, width: int, height: int, seed: Optional[int] = None) -> None:
+    def __init__(self, width: int,
+                 height: int, seed: Optional[int] = None) -> None:
         # """
         # Initialize the MazeGenerator.
 
@@ -229,10 +230,13 @@ class MazeGenerator:
         self.solution_str = self.convert_path_to_directions(self.solution)
 
     def build_shortest_path(self) -> list[tuple[int, int]]:
-        """Execute BFS to map the graph, then reconstruct the coordinate sequence."""
+        """Execute BFS to map the graph,
+        then reconstruct the coordinate sequence.
+        """
         ex, ey = self.entry
         xx, xy = self.exit
-        from_cell: dict[tuple[int, int], tuple[int, int] | None] = {(ex, ey): None}
+        from_cell: dict[tuple[int, int],
+                        tuple[int, int] | None] = {(ex, ey): None}
         queue: deque[tuple[int, int]] = deque([(ex, ey)])
         while queue:
             x, y = queue.popleft()
@@ -257,7 +261,9 @@ class MazeGenerator:
         return path
 
     def convert_path_to_directions(self, path: list[tuple[int, int]]) -> str:
-        """Translate a sequential list of coordinates into cardinal directions."""
+        """Translate a sequential list of
+        coordinates into cardinal directions.
+        """
         dirs = []
         for i in range(len(path) - 1):
             cx, cy = path[i]
@@ -273,11 +279,9 @@ class MazeGenerator:
                 dirs.append("W")
         return "".join(dirs)
 
-
     def to_hex_grid(self) -> list[str]:
         # """
         # Convert grid to list of hex strings (one per row).
-
         # Returns:
         #     List of strings, each containing WIDTH hex digits.
         # """

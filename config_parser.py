@@ -28,14 +28,17 @@ def parse_config(filepath: str) -> dict[str, Any]:
                     continue
                 if "=" not in line:
                     raise ConfigError(
-                        f"Line {lineno}: invalid format (expected KEY=VALUE): {line!r}"
+                        f"Line {lineno}: invalid format "
+                        f"(expected KEY=VALUE): {line!r}"
                     )
                 key, _, value = line.partition("=")
                 parsed_key = key.strip().upper()
                 if parsed_key in raw:
                     raise ConfigError(
-                        f"Line {lineno}: Duplicate key detected for {parsed_key!r}. "
-                        "Configuration files must not contain overlapping states."
+                        f"Line {lineno}: Duplicate "
+                        f"key detected for {parsed_key!r}. "
+                        "Configuration files must "
+                        "not contain overlapping states."
                     )
 
                 raw[parsed_key] = value.strip()
@@ -132,5 +135,6 @@ def parse_config(filepath: str) -> dict[str, Any]:
             try:
                 config["SEED"] = int(raw["SEED"])
             except ValueError as e:
-                raise ConfigError(f"SEED must be an integer or None: {e}") from e
+                raise ConfigError("SEED must be an "
+                                  f"integer or None: {e}")
     return config

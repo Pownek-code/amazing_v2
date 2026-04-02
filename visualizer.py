@@ -36,7 +36,8 @@ def set_wall_color(index: int) -> None:
     curses.init_pair(PAIR_WALL, new_color, new_color)
 
 
-def write_char(win: curses.window, row: int, col: int, ch: str, attr: int = 0) -> None:
+def write_char(win: curses.window,
+               row: int, col: int, ch: str, attr: int = 0) -> None:
     max_row, max_col = win.getmaxyx()
     if 0 <= row < max_row and 0 <= col < max_col - 1:
         try:
@@ -52,11 +53,13 @@ def is_big_enough(win: curses.window, gen: MazeGenerator) -> bool:
 
     if max_rows < needed_rows or max_cols < needed_cols:
         win.clear()
-        write_char(win, 0, 0, "Terminal too small!", curses.color_pair(PAIR_EXIT))
+        write_char(win, 0, 0, "Terminal too small!",
+                   curses.color_pair(PAIR_EXIT))
         write_char(win, 1, 0, f"Need: {needed_cols} cols x {needed_rows} rows")
         write_char(win, 2, 0, f"Got : {max_cols} cols x {max_rows} rows")
         write_char(
-            win, 3, 0, "Please resize and try again.", curses.color_pair(PAIR_MENU)
+            win, 3, 0, "Please resize and try again.",
+            curses.color_pair(PAIR_MENU)
         )
         win.refresh()
         return False
@@ -106,9 +109,11 @@ def draw_maze(win: curses.window, gen: MazeGenerator, show_path: bool) -> None:
                 wall_closed = is_border
 
                 if not is_border:
-                    if 0 <= cell_above < H and (gen.grid[cell_above][cx] & SOUTH):
+                    if (0 <= cell_above < H
+                            and (gen.grid[cell_above][cx] & SOUTH)):
                         wall_closed = True
-                    elif 0 <= cell_below < H and (gen.grid[cell_below][cx] & NORTH):
+                    elif (0 <= cell_below < H
+                            and (gen.grid[cell_below][cx] & NORTH)):
                         wall_closed = True
 
                 if wall_closed:
@@ -133,7 +138,8 @@ def draw_maze(win: curses.window, gen: MazeGenerator, show_path: bool) -> None:
                 if not is_border:
                     if 0 <= cell_left < W and (gen.grid[cy][cell_left] & EAST):
                         wall_closed = True
-                    elif 0 <= cell_right < W and (gen.grid[cy][cell_right] & WEST):
+                    elif (0 <= cell_right < W
+                            and (gen.grid[cy][cell_right] & WEST)):
                         wall_closed = True
 
                 if wall_closed:
@@ -165,12 +171,14 @@ def draw_maze(win: curses.window, gen: MazeGenerator, show_path: bool) -> None:
                     write_char(win, row, col, " ", attr_empty)
 
     menu_row = total_rows + 1
-    write_char(win, menu_row, 0, "==== A-Maze-ing ====", curses.color_pair(PAIR_MENU))
+    write_char(win, menu_row, 0,
+               "==== A-Maze-ing ====", curses.color_pair(PAIR_MENU))
     write_char(win, menu_row + 1, 0, "1. Generate new maze")
     write_char(win, menu_row + 2, 0, "2. Show / Hide solution path")
     write_char(win, menu_row + 3, 0, "3. Change wall color")
     write_char(win, menu_row + 4, 0, "4. Quit")
-    write_char(win, menu_row + 5, 0, "Choice (1-4): ", curses.color_pair(PAIR_MENU))
+    write_char(win, menu_row + 5, 0,
+               "Choice (1-4): ", curses.color_pair(PAIR_MENU))
     win.refresh()
 
 
