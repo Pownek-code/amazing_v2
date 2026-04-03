@@ -26,13 +26,6 @@ def build_generator(config: dict) -> MazeGenerator:  # type: ignore[type-arg]
         entry=config["ENTRY"],
         exit=config["EXIT"],
     )
-
-    if gen.forty_two_omitted:
-        print(
-            "Warning: maze is too small to include the '42' pattern.",
-            file=sys.stderr,
-        )
-
     return gen
 
 
@@ -89,6 +82,11 @@ def main() -> int:
         return new_gen
 
     run_visualizer(gen, regenerate)
+    if gen.forty_two_omitted:
+        print(
+            "Warning: maze is too small to include the '42' pattern.",
+            file=sys.stderr,
+        )
     return 0
 
 
